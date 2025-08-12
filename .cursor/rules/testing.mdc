@@ -1,0 +1,13 @@
+---
+description: This rule specifies the testing principles for the application.
+globs:
+alwaysApply: true
+---
+
+## Testing
+- Follow test-driven development. 
+- Write comprehensive backend tests for each feature. 
+- Write comprehensive frontend tests for each feature. 
+- Use descriptive and meaningful test names that clearly describe the expected behavior.
+- Implement proper error handling and logging in tests to provide clear failure messages.
+

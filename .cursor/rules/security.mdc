@@ -1,0 +1,30 @@
+---
+description: This rule specifies the security principles for the application. The application implementation should always conform to the security principles specified in this rule. 
+globs:
+alwaysApply: true
+---
+
+## Data Handling
+- (Frontend+Backend) Validate and sanitize all inputs from external sources to prevent injection attacks.
+- (Frontend+Backend) Never invoke shell commands with unsanitized strings.
+- (Frontend+Backend) Store sensitive data encrypted at rest and in transit.
+- (Frontend+Backend) Avoid logging sensitive data; redact or hash sensitive data in logs.
+- (Frontend+Backend) Use environment variables or a secure secrets manager for API keys and credentials.
+
+
+## API and Network Security
+- (Frontend+Backend) Use HTTPS for all API communications.
+- (Backend) Handle CORS safely. 
+- (Backend) Implement proper authentication and authorization.
+- (Backend) Follow the principle of least privilege for API endpoints and DB access.
+- (Backend) Implement rate limiting on backend APIs endpoints to prevent abuse.
+- (Backend) Use secure defaults (e.g., TLSv1.2+, strong ciphers/protocols).
+
+
+## Operational and Permission Boundaries
+- (Frontend) Request only the minimum Android permissions needed.
+- (Frontend and Backend) Isolate sensitive operations with explicit permission boundaries.
+
+
+## Reliability and Security Resilience
+- (Frontend+Backend) Apply retries, exponential backoff, and timeouts to all external calls, ensuring they don’t bypass auth or duplicate sensitive actions.

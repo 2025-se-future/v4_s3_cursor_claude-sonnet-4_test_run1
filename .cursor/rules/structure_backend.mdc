@@ -1,0 +1,25 @@
+---
+description: This rule provides the structure for the backend in TypeScript. 
+globs:
+alwaysApply: true
+---
+
+## Structure
+Typescript code of the backend Node.js application is under /backend folder. 
+
+- Organize code by architecture layers into the following packages: 
+```
+├── /src
+│	├── /models          # Define the structure of the data (e.g., database schemas). 
+│	├── /services         # Contain the business logic. 
+│	├── /controllers     # Handle incoming HTTP requests.
+│	├── /routes            # Define all the endpoints and link them to controllers. 
+│	├── /middleware # Reusable functions that run before or after request handlers such as auth, error handling, etc.
+│	├── /config            # Store configuration such as environment variables or DB settings.
+│	├── /types             # Store the shared custom TypeScript type definitions and interfaces.
+│	├── /utils               # Store the helper or utility functions.
+│	└── /docs              # Store the OpenAPI specification of backend APIs.
+└── /tests	       # Contains tests. 
+
+```
+- Inside `/models`, `/routes`, `/controllers`, `/services` folders, organize files by the following domains: users, groups, voting, and movies. 

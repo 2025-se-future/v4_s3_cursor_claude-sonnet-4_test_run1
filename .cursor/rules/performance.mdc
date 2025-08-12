@@ -1,0 +1,22 @@
+---
+description: This rule specifies the performance principles for the application. The application implementation should always conform to the performance principles specified in this rule. 
+globs:
+alwaysApply: true
+---
+
+## Caching and Data Access 
+- (Frontend+Backend) Implement caching for frequently accessed data. 
+- (Frontend+Backend) Use lazy loading and pagination for large datasets. 
+- (Frontend+Backend) Use dynamic loading for non-critical components and modules.
+
+## Asset Delivery and Startup Behavior
+- (Frontend+Backend) Optimize image and asset delivery. 
+- (Frontend) Optimize app cold startup time.
+- (Frontend) Optimize reasonable rendering performance and app responsiveness.  
+
+## Operational Efficiency and Resource Handling
+- (Frontend+Backend) Handle asynchronous operations efficiently.
+- (Frontend+Backend) Implement efficient algorithms and use efficient data structures.
+- (Frontend+Backend) Optimize CPU/memory usage.
+- (Backend) Optimize API endpoint response times. 
+- (Backend) Optimize database queries with proper indexing.

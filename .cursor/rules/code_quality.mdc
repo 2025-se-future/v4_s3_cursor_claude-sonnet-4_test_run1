@@ -1,0 +1,33 @@
+---
+description: This rule specifies the code quality guidelines for the application.
+globs:
+alwaysApply: true
+---
+
+## Architecture and Design Pattern
+- Use Clean Architecture. 
+- Use Repository Pattern for data persistence.
+- Follow SOLID principles for classes and components.
+- Prefer composition over inheritance.
+- Declare interfaces to define contracts.
+
+## Readability and Maintainability
+- Avoid complicated or complex classes or methods. 
+- Avoid magic numbers and values. 
+- Use early returns for clarity. 
+- Document public classes and methods. 
+- Avoid placing data validation inside functions; use classes with internal validation instead. 
+
+## Error Handling
+- Handle error scenarios thoroughly. 
+- Use exceptions for unexpected errors only and use `Result` types or null for expected failures. 
+- Create custom exceptions and errors with descriptive names. 
+- Provide context in error messages including what failed, why, and suggested actions.
+- Use global error handling where appropriate.
+- Provide fallbacks or graceful degradation when possible. 
+
+## TypeScript
+- Explicitly declare the type of all variables, parameters, and return value. 
+- Avoid using `any`.
+- Create necessary custom types.
+- One export per file.
