@@ -1,8 +1,6 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const dotenv_1 = require("dotenv");
+import { config } from 'dotenv';
 // Load test environment variables
-(0, dotenv_1.config)({ path: '.env.test' });
+config({ path: '.env.test' });
 // Set test timeout
 jest.setTimeout(10000);
 // Mock console methods to reduce noise in tests

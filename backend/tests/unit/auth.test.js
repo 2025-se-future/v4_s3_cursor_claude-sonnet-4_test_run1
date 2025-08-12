@@ -1,41 +1,38 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const globals_1 = require("@jest/globals");
-const express_1 = require("express");
-const auth_1 = require("../../src/controllers/auth");
-const auth_2 = require("../../src/services/auth");
-const users_1 = require("../../src/services/users");
-const common_1 = require("../../src/types/common");
+import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
+import { AuthController } from '../../src/controllers/auth';
+import { AuthService } from '../../src/services/auth';
+import { UserService } from '../../src/services/users';
+import { DatabaseError, AuthenticationError } from '../../src/types/common';
 // Mock the services
-globals_1.jest.mock('../../src/services/auth');
-globals_1.jest.mock('../../src/services/users');
-const MockedAuthService = auth_2.AuthService;
-const MockedUserService = users_1.UserService;
-(0, globals_1.describe)('AuthController', () => {
+jest.mock('../../src/services/auth');
+jest.mock('../../src/services/users');
+const MockedAuthService = AuthService;
+const MockedUserService = UserService;
+describe('AuthController', () => {
     let authController;
     let mockAuthService;
     let mockUserService;
     let mockRequest;
     let mockResponse;
     let mockNext;
-    (0, globals_1.beforeEach)(() => {
+    beforeEach(() => {
         mockAuthService = new MockedAuthService();
         mockUserService = new MockedUserService();
-        authController = new auth_1.AuthController(mockAuthService, mockUserService);
+        authController = new AuthController(mockAuthService, mockUserService);
         mockRequest = {};
         mockResponse = {
-            status: globals_1.jest.fn().mockReturnThis(),
-            json: globals_1.jest.fn().mockReturnThis(),
-            cookie: globals_1.jest.fn().mockReturnThis(),
-            clearCookie: globals_1.jest.fn().mockReturnThis(),
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn().mockReturnThis(),
+            cookie: jest.fn().mockReturnThis(),
+            clearCookie: jest.fn().mockReturnThis(),
         };
-        mockNext = globals_1.jest.fn();
+        mockNext = jest.fn();
     });
-    (0, globals_1.afterEach)(() => {
-        globals_1.jest.clearAllMocks();
+    afterEach(() => {
+        jest.clearAllMocks();
     });
-    (0, globals_1.describe)('googleAuth', () => {
-        (0, globals_1.it)('should successfully authenticate new user and create profile', async () => {
+    describe('googleAuth', () => {
+        it('should successfully authenticate new user and create profile', async () => {
             // Arrange
             const googleToken = 'valid_google_token';
             const googleUserInfo = {
@@ -62,23 +59,23 @@ const MockedUserService = users_1.UserService;
             // Act
             await authController.googleAuth(mockRequest, mockResponse, mockNext);
             // Assert
-            (0, globals_1.expect)(mockAuthService.verifyGoogleToken).toHaveBeenCalledWith(googleToken);
-            (0, globals_1.expect)(mockUserService.findByGoogleId).toHaveBeenCalledWith('google_user_123');
-            (0, globals_1.expect)(mockUserService.createUser).toHaveBeenCalledWith({
+            expect(mockAuthService.verifyGoogleToken).toHaveBeenCalledWith(googleToken);
+            expect(mockUserService.findByGoogleId).toHaveBeenCalledWith('google_user_123');
+            expect(mockUserService.createUser).toHaveBeenCalledWith({
                 googleId: 'google_user_123',
                 email: 'user@example.com',
                 name: 'Test User',
                 profilePicture: 'https://example.com/profile.jpg'
             });
-            (0, globals_1.expect)(mockAuthService.generateJWT).toHaveBeenCalledWith(newUser.id);
-            (0, globals_1.expect)(mockResponse.cookie).toHaveBeenCalledWith('auth_token', jwtToken, {
+            expect(mockAuthService.generateJWT).toHaveBeenCalledWith(newUser.id);
+            expect(mockResponse.cookie).toHaveBeenCalledWith('auth_token', jwtToken, {
                 httpOnly: true,
                 secure: true,
                 sameSite: 'strict',
                 maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
             });
-            (0, globals_1.expect)(mockResponse.status).toHaveBeenCalledWith(200);
-            (0, globals_1.expect)(mockResponse.json).toHaveBeenCalledWith({
+            expect(mockResponse.status).toHaveBeenCalledWith(200);
+            expect(mockResponse.json).toHaveBeenCalledWith({
                 success: true,
                 message: 'Authentication successful',
                 user: {
@@ -90,7 +87,7 @@ const MockedUserService = users_1.UserService;
                 token: jwtToken
             });
         });
-        (0, globals_1.it)('should successfully authenticate existing user', async () => {
+        it('should successfully authenticate existing user', async () => {
             // Arrange
             const googleToken = 'valid_google_token';
             const googleUserInfo = {
@@ -116,12 +113,12 @@ const MockedUserService = users_1.UserService;
             // Act
             await authController.googleAuth(mockRequest, mockResponse, mockNext);
             // Assert
-            (0, globals_1.expect)(mockAuthService.verifyGoogleToken).toHaveBeenCalledWith(googleToken);
-            (0, globals_1.expect)(mockUserService.findByGoogleId).toHaveBeenCalledWith('google_user_123');
-            (0, globals_1.expect)(mockUserService.createUser).not.toHaveBeenCalled();
-            (0, globals_1.expect)(mockAuthService.generateJWT).toHaveBeenCalledWith(existingUser.id);
-            (0, globals_1.expect)(mockResponse.status).toHaveBeenCalledWith(200);
-            (0, globals_1.expect)(mockResponse.json).toHaveBeenCalledWith({
+            expect(mockAuthService.verifyGoogleToken).toHaveBeenCalledWith(googleToken);
+            expect(mockUserService.findByGoogleId).toHaveBeenCalledWith('google_user_123');
+            expect(mockUserService.createUser).not.toHaveBeenCalled();
+            expect(mockAuthService.generateJWT).toHaveBeenCalledWith(existingUser.id);
+            expect(mockResponse.status).toHaveBeenCalledWith(200);
+            expect(mockResponse.json).toHaveBeenCalledWith({
                 success: true,
                 message: 'Authentication successful',
                 user: {
@@ -133,36 +130,36 @@ const MockedUserService = users_1.UserService;
                 token: jwtToken
             });
         });
-        (0, globals_1.it)('should handle missing google token', async () => {
+        it('should handle missing google token', async () => {
             // Arrange
             mockRequest.body = {};
             // Act
             await authController.googleAuth(mockRequest, mockResponse, mockNext);
             // Assert
-            (0, globals_1.expect)(mockResponse.status).toHaveBeenCalledWith(400);
-            (0, globals_1.expect)(mockResponse.json).toHaveBeenCalledWith({
+            expect(mockResponse.status).toHaveBeenCalledWith(400);
+            expect(mockResponse.json).toHaveBeenCalledWith({
                 success: false,
                 message: 'Google token is required',
                 error: 'MISSING_TOKEN'
             });
         });
-        (0, globals_1.it)('should handle invalid google token', async () => {
+        it('should handle invalid google token', async () => {
             // Arrange
             const googleToken = 'invalid_google_token';
             mockRequest.body = { googleToken };
-            mockAuthService.verifyGoogleToken.mockRejectedValue(new common_1.AuthenticationError('Invalid Google token'));
+            mockAuthService.verifyGoogleToken.mockRejectedValue(new AuthenticationError('Invalid Google token'));
             // Act
             await authController.googleAuth(mockRequest, mockResponse, mockNext);
             // Assert
-            (0, globals_1.expect)(mockAuthService.verifyGoogleToken).toHaveBeenCalledWith(googleToken);
-            (0, globals_1.expect)(mockResponse.status).toHaveBeenCalledWith(401);
-            (0, globals_1.expect)(mockResponse.json).toHaveBeenCalledWith({
+            expect(mockAuthService.verifyGoogleToken).toHaveBeenCalledWith(googleToken);
+            expect(mockResponse.status).toHaveBeenCalledWith(401);
+            expect(mockResponse.json).toHaveBeenCalledWith({
                 success: false,
                 message: 'Authentication failed. Please try signing in again.',
                 error: 'INVALID_TOKEN'
             });
         });
-        (0, globals_1.it)('should handle database error during user creation', async () => {
+        it('should handle database error during user creation', async () => {
             // Arrange
             const googleToken = 'valid_google_token';
             const googleUserInfo = {
@@ -174,18 +171,18 @@ const MockedUserService = users_1.UserService;
             mockRequest.body = { googleToken };
             mockAuthService.verifyGoogleToken.mockResolvedValue(googleUserInfo);
             mockUserService.findByGoogleId.mockResolvedValue(null);
-            mockUserService.createUser.mockRejectedValue(new common_1.DatabaseError('Database connection failed'));
+            mockUserService.createUser.mockRejectedValue(new DatabaseError('Database connection failed'));
             // Act
             await authController.googleAuth(mockRequest, mockResponse, mockNext);
             // Assert
-            (0, globals_1.expect)(mockResponse.status).toHaveBeenCalledWith(500);
-            (0, globals_1.expect)(mockResponse.json).toHaveBeenCalledWith({
+            expect(mockResponse.status).toHaveBeenCalledWith(500);
+            expect(mockResponse.json).toHaveBeenCalledWith({
                 success: false,
                 message: 'Account creation failed. Please try again.',
                 error: 'DATABASE_ERROR'
             });
         });
-        (0, globals_1.it)('should handle authentication service unavailable', async () => {
+        it('should handle authentication service unavailable', async () => {
             // Arrange
             const googleToken = 'valid_google_token';
             mockRequest.body = { googleToken };
@@ -193,29 +190,29 @@ const MockedUserService = users_1.UserService;
             // Act
             await authController.googleAuth(mockRequest, mockResponse, mockNext);
             // Assert
-            (0, globals_1.expect)(mockResponse.status).toHaveBeenCalledWith(503);
-            (0, globals_1.expect)(mockResponse.json).toHaveBeenCalledWith({
+            expect(mockResponse.status).toHaveBeenCalledWith(503);
+            expect(mockResponse.json).toHaveBeenCalledWith({
                 success: false,
                 message: 'Authentication service temporarily unavailable. Please try again later.',
                 error: 'SERVICE_UNAVAILABLE'
             });
         });
     });
-    (0, globals_1.describe)('logout', () => {
-        (0, globals_1.it)('should successfully logout user', async () => {
+    describe('logout', () => {
+        it('should successfully logout user', async () => {
             // Act
             await authController.logout(mockRequest, mockResponse, mockNext);
             // Assert
-            (0, globals_1.expect)(mockResponse.clearCookie).toHaveBeenCalledWith('auth_token');
-            (0, globals_1.expect)(mockResponse.status).toHaveBeenCalledWith(200);
-            (0, globals_1.expect)(mockResponse.json).toHaveBeenCalledWith({
+            expect(mockResponse.clearCookie).toHaveBeenCalledWith('auth_token');
+            expect(mockResponse.status).toHaveBeenCalledWith(200);
+            expect(mockResponse.json).toHaveBeenCalledWith({
                 success: true,
                 message: 'Logout successful'
             });
         });
     });
-    (0, globals_1.describe)('verifyToken', () => {
-        (0, globals_1.it)('should successfully verify valid token', async () => {
+    describe('verifyToken', () => {
+        it('should successfully verify valid token', async () => {
             // Arrange
             const token = 'valid_jwt_token';
             const userId = 'user_123';
@@ -231,10 +228,10 @@ const MockedUserService = users_1.UserService;
             // Act
             await authController.verifyToken(mockRequest, mockResponse, mockNext);
             // Assert
-            (0, globals_1.expect)(mockAuthService.verifyJWT).toHaveBeenCalledWith(token);
-            (0, globals_1.expect)(mockUserService.findById).toHaveBeenCalledWith(userId);
-            (0, globals_1.expect)(mockResponse.status).toHaveBeenCalledWith(200);
-            (0, globals_1.expect)(mockResponse.json).toHaveBeenCalledWith({
+            expect(mockAuthService.verifyJWT).toHaveBeenCalledWith(token);
+            expect(mockUserService.findById).toHaveBeenCalledWith(userId);
+            expect(mockResponse.status).toHaveBeenCalledWith(200);
+            expect(mockResponse.json).toHaveBeenCalledWith({
                 success: true,
                 user: {
                     id: user.id,
@@ -244,44 +241,44 @@ const MockedUserService = users_1.UserService;
                 }
             });
         });
-        (0, globals_1.it)('should handle missing authorization header', async () => {
+        it('should handle missing authorization header', async () => {
             // Arrange
             mockRequest.headers = {};
             // Act
             await authController.verifyToken(mockRequest, mockResponse, mockNext);
             // Assert
-            (0, globals_1.expect)(mockResponse.status).toHaveBeenCalledWith(401);
-            (0, globals_1.expect)(mockResponse.json).toHaveBeenCalledWith({
+            expect(mockResponse.status).toHaveBeenCalledWith(401);
+            expect(mockResponse.json).toHaveBeenCalledWith({
                 success: false,
                 message: 'No token provided',
                 error: 'MISSING_TOKEN'
             });
         });
-        (0, globals_1.it)('should handle invalid token format', async () => {
+        it('should handle invalid token format', async () => {
             // Arrange
             mockRequest.headers = { authorization: 'InvalidFormat' };
             // Act
             await authController.verifyToken(mockRequest, mockResponse, mockNext);
             // Assert
-            (0, globals_1.expect)(mockResponse.status).toHaveBeenCalledWith(401);
-            (0, globals_1.expect)(mockResponse.json).toHaveBeenCalledWith({
+            expect(mockResponse.status).toHaveBeenCalledWith(401);
+            expect(mockResponse.json).toHaveBeenCalledWith({
                 success: false,
                 message: 'Invalid token format',
                 error: 'INVALID_TOKEN_FORMAT'
             });
         });
-        (0, globals_1.it)('should handle expired or invalid token', async () => {
+        it('should handle expired or invalid token', async () => {
             // Arrange
             const token = 'expired_jwt_token';
             mockRequest.headers = { authorization: `Bearer ${token}` };
             mockAuthService.verifyJWT.mockImplementation(() => {
-                throw new common_1.AuthenticationError('Token expired');
+                throw new AuthenticationError('Token expired');
             });
             // Act
             await authController.verifyToken(mockRequest, mockResponse, mockNext);
             // Assert
-            (0, globals_1.expect)(mockResponse.status).toHaveBeenCalledWith(401);
-            (0, globals_1.expect)(mockResponse.json).toHaveBeenCalledWith({
+            expect(mockResponse.status).toHaveBeenCalledWith(401);
+            expect(mockResponse.json).toHaveBeenCalledWith({
                 success: false,
                 message: 'Invalid or expired token',
                 error: 'INVALID_TOKEN'
@@ -289,13 +286,13 @@ const MockedUserService = users_1.UserService;
         });
     });
 });
-(0, globals_1.describe)('AuthService', () => {
+describe('AuthService', () => {
     let authService;
-    (0, globals_1.beforeEach)(() => {
-        authService = new auth_2.AuthService();
+    beforeEach(() => {
+        authService = new AuthService();
     });
-    (0, globals_1.describe)('verifyGoogleToken', () => {
-        (0, globals_1.it)('should successfully verify valid Google token', async () => {
+    describe('verifyGoogleToken', () => {
+        it('should successfully verify valid Google token', async () => {
             // This would typically mock the Google OAuth2 client
             // For now, we'll test the interface
             const token = 'valid_google_token';
@@ -307,32 +304,32 @@ const MockedUserService = users_1.UserService;
             //   picture: 'https://example.com/profile.jpg'
             // });
         });
-        (0, globals_1.it)('should reject invalid Google token', async () => {
+        it('should reject invalid Google token', async () => {
             const token = 'invalid_google_token';
             // Mock implementation would reject
             // await expect(authService.verifyGoogleToken(token))
             //   .rejects.toThrow(AuthenticationError);
         });
     });
-    (0, globals_1.describe)('generateJWT', () => {
-        (0, globals_1.it)('should generate valid JWT token', () => {
+    describe('generateJWT', () => {
+        it('should generate valid JWT token', () => {
             const userId = 'user_123';
             const token = authService.generateJWT(userId);
-            (0, globals_1.expect)(typeof token).toBe('string');
-            (0, globals_1.expect)(token.length).toBeGreaterThan(0);
+            expect(typeof token).toBe('string');
+            expect(token.length).toBeGreaterThan(0);
         });
     });
-    (0, globals_1.describe)('verifyJWT', () => {
-        (0, globals_1.it)('should verify valid JWT token', () => {
+    describe('verifyJWT', () => {
+        it('should verify valid JWT token', () => {
             const userId = 'user_123';
             const token = authService.generateJWT(userId);
             const decoded = authService.verifyJWT(token);
-            (0, globals_1.expect)(decoded.userId).toBe(userId);
+            expect(decoded.userId).toBe(userId);
         });
-        (0, globals_1.it)('should reject invalid JWT token', () => {
+        it('should reject invalid JWT token', () => {
             const invalidToken = 'invalid.jwt.token';
-            (0, globals_1.expect)(() => authService.verifyJWT(invalidToken))
-                .toThrow(common_1.AuthenticationError);
+            expect(() => authService.verifyJWT(invalidToken))
+                .toThrow(AuthenticationError);
         });
     });
 });
