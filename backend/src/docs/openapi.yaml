@@ -1,0 +1,11 @@
+# OpenAPI specification placeholder
+# API documentation will be implemented here
+
+openapi: 3.0.0
+info:
+  title: MovieSwipe API
+  description: API for collaborative movie selection app
+  version: 1.0.0
+  
+paths:
+  # API endpoints will be documented here
