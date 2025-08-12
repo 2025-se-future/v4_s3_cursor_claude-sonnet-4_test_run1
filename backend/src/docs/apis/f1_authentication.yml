@@ -1,0 +1,391 @@
+openapi: 3.0.3
+info:
+  title: MovieSwipe Authentication API
+  description: |
+    Authentication API for the MovieSwipe application.
+    This API handles user authentication using Google OAuth 2.0 and JWT tokens.
+    
+    ## Authentication Flow
+    1. User initiates Google OAuth authentication from the mobile app
+    2. Mobile app receives Google OAuth token
+    3. Mobile app sends Google token to `/api/auth/google` endpoint
+    4. Backend verifies Google token and creates/retrieves user
+    5. Backend returns JWT token for subsequent API calls
+    6. Mobile app uses JWT token in Authorization header for protected endpoints
+    
+    ## Security
+    - All authentication endpoints use HTTPS in production
+    - JWT tokens are stored in secure HTTP-only cookies
+    - Rate limiting is applied to prevent abuse
+    - Google OAuth tokens are verified against Google's servers
+    
+  version: 1.0.0
+  contact:
+    name: MovieSwipe API Team
+    email: api@movieswipe.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+  - url: https://api.movieswipe.com/api
+    description: Production server
+
+paths:
+  /auth/google:
+    post:
+      summary: Authenticate with Google OAuth
+      description: |
+        Authenticates a user using Google OAuth token. 
+        If the user doesn't exist, a new user account is created automatically.
+        Returns a JWT token for subsequent API calls.
+      operationId: authenticateWithGoogle
+      tags:
+        - Authentication
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - googleToken
+              properties:
+                googleToken:
+                  type: string
+                  description: Google OAuth ID token received from Google Sign-In
+                  example: "eyJhbGciOiJSUzI1NiIsImtpZCI6IjE2NzAyN..."
+            examples:
+              validToken:
+                summary: Valid Google token
+                value:
+                  googleToken: "eyJhbGciOiJSUzI1NiIsImtpZCI6IjE2NzAyN..."
+      responses:
+        '200':
+          description: Authentication successful
+          headers:
+            Set-Cookie:
+              description: JWT token set as HTTP-only cookie
+              schema:
+                type: string
+                example: "auth_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; HttpOnly; Secure; SameSite=Strict; Max-Age=604800; Path=/"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSuccessResponse'
+              examples:
+                newUser:
+                  summary: New user created and authenticated
+                  value:
+                    success: true
+                    message: "Authentication successful"
+                    user:
+                      id: "60f7b3b3b3b3b3b3b3b3b3b3"
+                      email: "user@example.com"
+                      name: "John Doe"
+                      profilePicture: "https://lh3.googleusercontent.com/a/profile.jpg"
+                    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                existingUser:
+                  summary: Existing user authenticated
+                  value:
+                    success: true
+                    message: "Authentication successful"
+                    user:
+                      id: "60f7b3b3b3b3b3b3b3b3b3b3"
+                      email: "existing@example.com"
+                      name: "Jane Smith"
+                      profilePicture: "https://lh3.googleusercontent.com/a/existing.jpg"
+                    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '400':
+          description: Bad request - Missing or invalid Google token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+              examples:
+                missingToken:
+                  summary: Missing Google token
+                  value:
+                    success: false
+                    message: "Google token is required"
+                    error: "MISSING_TOKEN"
+        '401':
+          description: Unauthorized - Invalid Google token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+              examples:
+                invalidToken:
+                  summary: Invalid Google token
+                  value:
+                    success: false
+                    message: "Authentication failed. Please try signing in again."
+                    error: "INVALID_TOKEN"
+        '500':
+          description: Internal server error - Account creation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+              examples:
+                databaseError:
+                  summary: Database error during user creation
+                  value:
+                    success: false
+                    message: "Account creation failed. Please try again."
+                    error: "DATABASE_ERROR"
+        '503':
+          description: Service unavailable - Google authentication service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+              examples:
+                serviceUnavailable:
+                  summary: Google service unavailable
+                  value:
+                    success: false
+                    message: "Authentication service temporarily unavailable. Please try again later."
+                    error: "SERVICE_UNAVAILABLE"
+
+  /auth/logout:
+    post:
+      summary: Logout user
+      description: |
+        Logs out the current user by clearing the authentication cookie.
+        This endpoint can be called without authentication.
+      operationId: logout
+      tags:
+        - Authentication
+      security: []
+      responses:
+        '200':
+          description: Logout successful
+          headers:
+            Set-Cookie:
+              description: Auth cookie cleared
+              schema:
+                type: string
+                example: "auth_token=; Max-Age=0; Path=/"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Logout successful"
+
+  /auth/verify:
+    get:
+      summary: Verify JWT token
+      description: |
+        Verifies the provided JWT token and returns user information.
+        Used to check if a user is still authenticated and get current user data.
+      operationId: verifyToken
+      tags:
+        - Authentication
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  user:
+                    $ref: '#/components/schemas/User'
+              example:
+                success: true
+                user:
+                  id: "60f7b3b3b3b3b3b3b3b3b3b3"
+                  email: "user@example.com"
+                  name: "John Doe"
+                  profilePicture: "https://lh3.googleusercontent.com/a/profile.jpg"
+        '401':
+          description: Unauthorized - Invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+              examples:
+                noToken:
+                  summary: No token provided
+                  value:
+                    success: false
+                    message: "No token provided"
+                    error: "MISSING_TOKEN"
+                invalidFormat:
+                  summary: Invalid token format
+                  value:
+                    success: false
+                    message: "Invalid token format"
+                    error: "INVALID_TOKEN_FORMAT"
+                invalidToken:
+                  summary: Invalid or expired token
+                  value:
+                    success: false
+                    message: "Invalid or expired token"
+                    error: "INVALID_TOKEN"
+                userNotFound:
+                  summary: User not found
+                  value:
+                    success: false
+                    message: "User not found"
+                    error: "USER_NOT_FOUND"
+
+  /auth/refresh:
+    post:
+      summary: Refresh JWT token
+      description: |
+        Refreshes an existing JWT token, extending the user's session.
+        Requires a valid JWT token and returns a new token with extended expiration.
+      operationId: refreshToken
+      tags:
+        - Authentication
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Token refreshed successfully
+          headers:
+            Set-Cookie:
+              description: New JWT token set as HTTP-only cookie
+              schema:
+                type: string
+                example: "auth_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; HttpOnly; Secure; SameSite=Strict; Max-Age=604800; Path=/"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Token refreshed successfully"
+                  user:
+                    $ref: '#/components/schemas/User'
+                  token:
+                    type: string
+                    description: New JWT token
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '401':
+          description: Unauthorized - Invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from `/auth/google` endpoint
+
+  schemas:
+    User:
+      type: object
+      description: User information
+      properties:
+        id:
+          type: string
+          description: Unique user identifier
+          example: "60f7b3b3b3b3b3b3b3b3b3b3"
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "user@example.com"
+        name:
+          type: string
+          description: User's full name
+          example: "John Doe"
+        profilePicture:
+          type: string
+          format: uri
+          description: URL to user's profile picture
+          example: "https://lh3.googleusercontent.com/a/profile.jpg"
+      required:
+        - id
+        - email
+        - name
+        - profilePicture
+
+    AuthSuccessResponse:
+      type: object
+      description: Successful authentication response
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Authentication successful"
+        user:
+          $ref: '#/components/schemas/User'
+        token:
+          type: string
+          description: JWT token for API authentication
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      required:
+        - success
+        - message
+        - user
+        - token
+
+    AuthErrorResponse:
+      type: object
+      description: Authentication error response
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Authentication failed. Please try signing in again."
+        error:
+          type: string
+          description: Error code for programmatic handling
+          enum:
+            - MISSING_TOKEN
+            - INVALID_TOKEN
+            - INVALID_TOKEN_FORMAT
+            - USER_NOT_FOUND
+            - DATABASE_ERROR
+            - SERVICE_UNAVAILABLE
+            - RATE_LIMIT_EXCEEDED
+            - LOGIN_RATE_LIMIT_EXCEEDED
+          example: "INVALID_TOKEN"
+      required:
+        - success
+        - message
+        - error
+
+tags:
+  - name: Authentication
+    description: |
+      User authentication operations using Google OAuth 2.0.
+      
+      ## Usage
+      1. Use `/auth/google` to authenticate with Google OAuth token
+      2. Use returned JWT token in Authorization header for protected endpoints
+      3. Use `/auth/verify` to check token validity
+      4. Use `/auth/refresh` to extend session
+      5. Use `/auth/logout` to end session
