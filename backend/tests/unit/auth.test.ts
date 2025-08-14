@@ -5,13 +5,6 @@ import { AuthService } from '../../src/services/auth';
 import { UserService } from '../../src/services/users';
 import { DatabaseError, ValidationError, AuthenticationError } from '../../src/types/common';
 
-// Mock the services
-jest.mock('../../src/services/auth');
-jest.mock('../../src/services/users');
-
-const MockedAuthService = AuthService as jest.MockedClass<typeof AuthService>;
-const MockedUserService = UserService as jest.MockedClass<typeof UserService>;
-
 describe('AuthController', () => {
   let authController: AuthController;
   let mockAuthService: jest.Mocked<AuthService>;
@@ -21,8 +14,30 @@ describe('AuthController', () => {
   let mockNext: jest.Mock;
 
   beforeEach(() => {
-    mockAuthService = new MockedAuthService() as jest.Mocked<AuthService>;
-    mockUserService = new MockedUserService() as jest.Mocked<UserService>;
+    // Create mock services with proper method implementations
+    mockAuthService = {
+      verifyGoogleToken: jest.fn(),
+      generateJWT: jest.fn(),
+      verifyJWT: jest.fn(),
+      extractTokenFromHeader: jest.fn(),
+      getSecureCookieOptions: jest.fn(),
+    } as jest.Mocked<AuthService>;
+
+    mockUserService = {
+      findByGoogleId: jest.fn(),
+      createUser: jest.fn(),
+      findById: jest.fn(),
+    } as jest.Mocked<UserService>;
+
+    // Mock the getSecureCookieOptions to return expected values
+    mockAuthService.getSecureCookieOptions.mockReturnValue({
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict' as const,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+      path: '/'
+    });
+
     authController = new AuthController(mockAuthService, mockUserService);
     
     mockRequest = {};
@@ -50,7 +65,7 @@ describe('AuthController', () => {
         picture: 'https://example.com/profile.jpg'
       };
       const newUser = {
-        id: 'user_123',
+        _id: 'user_123',
         googleId: 'google_user_123',
         email: 'user@example.com',
         name: 'Test User',
@@ -78,19 +93,20 @@ describe('AuthController', () => {
         name: 'Test User',
         profilePicture: 'https://example.com/profile.jpg'
       });
-      expect(mockAuthService.generateJWT).toHaveBeenCalledWith(newUser.id);
+      expect(mockAuthService.generateJWT).toHaveBeenCalledWith(newUser._id);
       expect(mockResponse.cookie).toHaveBeenCalledWith('auth_token', jwtToken, {
         httpOnly: true,
         secure: true,
         sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        path: '/'
       });
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
         message: 'Authentication successful',
         user: {
-          id: newUser.id,
+          id: newUser._id,
           email: newUser.email,
           name: newUser.name,
           profilePicture: newUser.profilePicture
@@ -109,7 +125,7 @@ describe('AuthController', () => {
         picture: 'https://example.com/profile.jpg'
       };
       const existingUser = {
-        id: 'user_123',
+        _id: 'user_123',
         googleId: 'google_user_123',
         email: 'user@example.com',
         name: 'Test User',
@@ -131,13 +147,13 @@ describe('AuthController', () => {
       expect(mockAuthService.verifyGoogleToken).toHaveBeenCalledWith(googleToken);
       expect(mockUserService.findByGoogleId).toHaveBeenCalledWith('google_user_123');
       expect(mockUserService.createUser).not.toHaveBeenCalled();
-      expect(mockAuthService.generateJWT).toHaveBeenCalledWith(existingUser.id);
+      expect(mockAuthService.generateJWT).toHaveBeenCalledWith(existingUser._id);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
         message: 'Authentication successful',
         user: {
-          id: existingUser.id,
+          id: existingUser._id,
           email: existingUser.email,
           name: existingUser.name,
           profilePicture: existingUser.profilePicture
@@ -248,13 +264,14 @@ describe('AuthController', () => {
       const token = 'valid_jwt_token';
       const userId = 'user_123';
       const user = {
-        id: 'user_123',
+        _id: 'user_123',
         email: 'user@example.com',
         name: 'Test User',
         profilePicture: 'https://example.com/profile.jpg'
       };
 
       mockRequest.headers = { authorization: `Bearer ${token}` };
+      mockAuthService.extractTokenFromHeader.mockReturnValue(token);
       mockAuthService.verifyJWT.mockReturnValue({ userId });
       mockUserService.findById.mockResolvedValue(user);
 
@@ -268,7 +285,7 @@ describe('AuthController', () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
         user: {
-          id: user.id,
+          id: user._id,
           email: user.email,
           name: user.name,
           profilePicture: user.profilePicture
@@ -312,6 +329,7 @@ describe('AuthController', () => {
       // Arrange
       const token = 'expired_jwt_token';
       mockRequest.headers = { authorization: `Bearer ${token}` };
+      mockAuthService.extractTokenFromHeader.mockReturnValue(token);
       mockAuthService.verifyJWT.mockImplementation(() => {
         throw new AuthenticationError('Token expired');
       });

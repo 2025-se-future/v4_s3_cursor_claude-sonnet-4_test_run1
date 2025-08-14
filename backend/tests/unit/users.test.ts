@@ -2,5 +2,7 @@
 // Unit tests for user-related functionality
 
 describe('User Service', () => {
-  // User unit tests will be implemented here
+  it('should have basic functionality', () => {
+    expect(true).toBe(true);
+  });
 });

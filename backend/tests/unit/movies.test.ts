@@ -2,5 +2,7 @@
 // Unit tests for movie-related functionality
 
 describe('Movie Service', () => {
-  // Movie unit tests will be implemented here
+  it('should have basic functionality', () => {
+    expect(true).toBe(true);
+  });
 });

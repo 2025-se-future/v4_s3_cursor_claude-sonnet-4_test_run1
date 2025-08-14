@@ -12,9 +12,9 @@
     "moduleResolution": "node",
 
     // Other Outputs
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
+    // "sourceMap": true,        // Removed to prevent .map files
+    // "declaration": true,      // Removed to prevent .d.ts files
+    // "declarationMap": true,   // Removed since no declarations
 
     // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,

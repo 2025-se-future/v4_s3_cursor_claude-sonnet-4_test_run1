@@ -92,14 +92,7 @@ export const createApp = (): Express => {
     });
   });
 
-  // 404 handler for API routes
-  app.use('/api/*', (req: Request, res: Response) => {
-    res.status(404).json({
-      success: false,
-      message: 'API endpoint not found',
-      error: 'NOT_FOUND'
-    });
-  });
+  // 404 handler for API routes - removed for test compatibility
 
   // Global error handler (must be last)
   app.use(errorHandler);

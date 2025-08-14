@@ -9,7 +9,7 @@ import {
   NotFoundError, 
   DatabaseError, 
   ExternalServiceError 
-} from '../types/common.js';
+} from '../types/common';
 
 export const errorHandler = (error: Error, req: Request, res: Response, next: NextFunction): void => {
   console.error('Error occurred:', {
